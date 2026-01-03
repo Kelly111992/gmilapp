@@ -308,13 +308,13 @@ io.on('connection', async (socket) => {
 
 // Iniciar servidor
 const PORT = process.env.PORT || 5000;
-server.listen(PORT, () => {
+server.listen(PORT, '0.0.0.0', () => {
   console.log(`
 ╔═══════════════════════════════════════════════════════════╗
 ║                                                           ║
 ║   📧  Gmail Monitor - Servidor iniciado                   ║
 ║                                                           ║
-║   🌐  URL: http://localhost:${PORT}                         ║
+║   🌐  URL: http://0.0.0.0:${PORT}                           ║
 ║                                                           ║
 ║   📋  Asegúrate de tener credentials.json en la carpeta   ║
 ║                                                           ║
