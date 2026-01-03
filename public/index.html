@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gmail Monitor - Extractor de Información en Tiempo Real</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+  <div class="app-container">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="logo">
+        <div class="logo-icon">📧</div>
+        <span>Gmail Monitor</span>
+      </div>
+
+      <div class="status-section">
+        <div class="status-indicator" id="statusIndicator">
+          <div class="status-dot offline"></div>
+          <span id="statusText">Desconectado</span>
+        </div>
+        <p class="email-address" id="emailAddress"></p>
+      </div>
+
+      <nav class="nav-menu">
+        <button class="nav-item active" data-view="inbox">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+            <polyline points="22,6 12,13 2,6" />
+          </svg>
+          <span>Bandeja de Entrada</span>
+          <span class="badge" id="unreadBadge">0</span>
+        </button>
+        <button class="nav-item" data-view="live">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10" />
+            <polyline points="12,6 12,12 16,14" />
+          </svg>
+          <span>Tiempo Real</span>
+          <span class="live-dot"></span>
+        </button>
+        <button class="nav-item" data-view="extracted">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+            <polyline points="14 2 14 8 20 8" />
+            <line x1="16" y1="13" x2="8" y2="13" />
+            <line x1="16" y1="17" x2="8" y2="17" />
+          </svg>
+          <span>Datos Extraídos</span>
+          <span class="badge extract-badge" id="extractBadge">0</span>
+        </button>
+      </nav>
+
+      <div class="monitoring-info">
+        <div class="info-card">
+          <span class="info-icon">🔄</span>
+          <div class="info-text">
+            <strong>Monitoreo Activo</strong>
+            <span>Cada 5 segundos</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="sidebar-footer">
+        <button class="refresh-btn" id="refreshBtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="23,4 23,10 17,10" />
+            <polyline points="1,20 1,14 7,14" />
+            <path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15" />
+          </svg>
+          Actualizar
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <!-- Auth Screen -->
+      <section class="auth-screen" id="authScreen">
+        <div class="auth-card">
+          <div class="auth-icon">🔐</div>
+          <h1>Conecta tu cuenta de Gmail</h1>
+          <p id="authMessage">Para comenzar a monitorear tus correos, necesitas autorizar el acceso a tu cuenta de
+            Gmail.</p>
+
+          <div class="credentials-warning" id="credentialsWarning" style="display: none;">
+            <div class="warning-icon">⚠️</div>
+            <h3>Falta archivo credentials.json</h3>
+            <p>Sigue estos pasos para obtenerlo:</p>
+            <ol>
+              <li>Ve a <a href="https://console.cloud.google.com/" target="_blank">Google Cloud Console</a></li>
+              <li>Crea un nuevo proyecto (o selecciona uno existente)</li>
+              <li>Habilita la <strong>Gmail API</strong></li>
+              <li>Ve a Credenciales → Crear credenciales → ID de cliente OAuth</li>
+              <li>Selecciona "Aplicación de escritorio"</li>
+              <li>Descarga el JSON y renómbralo a <code>credentials.json</code></li>
+              <li>Colócalo en la carpeta del proyecto</li>
+            </ol>
+          </div>
+
+          <button class="auth-btn" id="authBtn">
+            <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+              <path
+                d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                fill="#4285F4" />
+              <path
+                d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                fill="#34A853" />
+              <path
+                d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+                fill="#FBBC05" />
+              <path
+                d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                fill="#EA4335" />
+            </svg>
+            Conectar con Google
+          </button>
+        </div>
+      </section>
+
+      <!-- Inbox View -->
+      <section class="inbox-view" id="inboxView" style="display: none;">
+        <header class="content-header">
+          <h1>📥 Bandeja de Entrada</h1>
+          <p>Correos más recientes de tu cuenta</p>
+        </header>
+
+        <div class="emails-container" id="emailsContainer">
+          <div class="loading-state">
+            <div class="spinner"></div>
+            <p>Cargando correos...</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Live View - IMPROVED -->
+      <section class="live-view" id="liveView" style="display: none;">
+        <header class="content-header">
+          <div class="header-with-indicator">
+            <h1>⚡ Monitoreo en Tiempo Real</h1>
+            <div class="pulse-indicator">
+              <span class="pulse-dot"></span>
+              <span>ACTIVO</span>
+            </div>
+          </div>
+          <p>Cuando llegue un correo nuevo, la información se extraerá automáticamente</p>
+        </header>
+
+        <div class="live-container">
+          <!-- Live Feed -->
+          <div class="live-feed" id="liveFeed">
+            <div class="empty-state">
+              <div class="empty-icon">👀</div>
+              <h3>Esperando correos nuevos...</h3>
+              <p>Cuando llegue un correo nuevo, aparecerá aquí con su información extraída</p>
+              <div class="waiting-animation">
+                <div class="dot"></div>
+                <div class="dot"></div>
+                <div class="dot"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- NEW: Extracted Data View -->
+      <section class="extracted-view" id="extractedView" style="display: none;">
+        <header class="content-header">
+          <h1>📋 Datos Extraídos</h1>
+          <p>Información estructurada de los correos detectados</p>
+        </header>
+
+        <div class="extracted-container">
+          <div class="extracted-log" id="extractedLog">
+            <div class="empty-state">
+              <div class="empty-icon">📊</div>
+              <h3>Sin datos aún</h3>
+              <p>Cuando llegue un correo nuevo, la información extraída aparecerá aquí en formato JSON</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Email Detail Modal - IMPROVED -->
+      <div class="email-modal" id="emailModal">
+        <div class="modal-overlay" id="modalOverlay"></div>
+        <div class="modal-content">
+          <button class="modal-close" id="modalClose">✕</button>
+
+          <!-- Tabs -->
+          <div class="modal-tabs">
+            <button class="modal-tab active" data-tab="preview">Vista Previa</button>
+            <button class="modal-tab" data-tab="extracted">Datos Extraídos</button>
+          </div>
+
+          <!-- Preview Tab -->
+          <div class="modal-tab-content active" id="previewTab">
+            <div class="modal-header">
+              <h2 id="modalSubject">Asunto del correo</h2>
+              <div class="modal-meta">
+                <span id="modalFrom">De: ejemplo@gmail.com</span>
+                <span id="modalDate">Fecha</span>
+              </div>
+            </div>
+            <div class="modal-body" id="modalBody">
+              Contenido del correo...
+            </div>
+            <div class="modal-labels" id="modalLabels"></div>
+          </div>
+
+          <!-- Extracted Data Tab -->
+          <div class="modal-tab-content" id="extractedTab">
+            <div class="extracted-data-panel">
+              <h3>📋 Información Extraída</h3>
+              <div class="data-grid">
+                <div class="data-item">
+                  <span class="data-label">ID del Correo</span>
+                  <span class="data-value" id="dataId">-</span>
+                </div>
+                <div class="data-item">
+                  <span class="data-label">Remitente</span>
+                  <span class="data-value" id="dataFrom">-</span>
+                </div>
+                <div class="data-item">
+                  <span class="data-label">Destinatario</span>
+                  <span class="data-value" id="dataTo">-</span>
+                </div>
+                <div class="data-item">
+                  <span class="data-label">Asunto</span>
+                  <span class="data-value" id="dataSubject">-</span>
+                </div>
+                <div class="data-item">
+                  <span class="data-label">Fecha</span>
+                  <span class="data-value" id="dataDate">-</span>
+                </div>
+                <div class="data-item full-width">
+                  <span class="data-label">Etiquetas</span>
+                  <span class="data-value" id="dataLabels">-</span>
+                </div>
+              </div>
+
+              <h4>Cuerpo del Mensaje</h4>
+              <pre class="data-body" id="dataBody">-</pre>
+
+              <h4>JSON Completo</h4>
+              <pre class="json-output" id="jsonOutput">{}</pre>
+              <button class="copy-btn" id="copyJsonBtn">📋 Copiar JSON</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- NEW: Floating New Email Alert -->
+  <div class="new-email-alert" id="newEmailAlert">
+    <div class="alert-content">
+      <div class="alert-icon">🆕</div>
+      <div class="alert-info">
+        <h4>¡Nuevo Correo Detectado!</h4>
+        <p id="alertDetails">Extrayendo información...</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notifications -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="app.js"></script>
+</body>
+
+</html>

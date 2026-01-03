@@ -1,0 +1,22 @@
+# Dependencies
+node_modules/
+
+# Credentials and tokens - NEVER commit these
+credentials.json
+token.json
+
+# Environment files
+.env
+.env.local
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
