@@ -45,9 +45,11 @@ app.get('/login', async (req, res) => {
     }
 
     const { client_secret, client_id } = credentials.installed || credentials.web;
-    const redirectUri = process.env.RAILWAY_PUBLIC_DOMAIN
-      ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}/oauth2callback`
-      : 'http://localhost:3000/oauth2callback';
+    const redirectUri = process.env.RENDER_EXTERNAL_URL
+      ? `${process.env.RENDER_EXTERNAL_URL}/oauth2callback`
+      : (process.env.RAILWAY_PUBLIC_DOMAIN
+        ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}/oauth2callback`
+        : 'http://localhost:3000/oauth2callback');
 
     const oAuth2Client = new google.auth.OAuth2(client_id, client_secret, redirectUri);
 
@@ -90,9 +92,11 @@ app.get('/oauth2callback', async (req, res) => {
       credentials = JSON.parse(process.env.GOOGLE_CREDENTIALS);
     }
     const { client_secret, client_id, redirect_uris } = credentials.installed || credentials.web;
-    const redirectUri = process.env.RAILWAY_PUBLIC_DOMAIN
-      ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}/oauth2callback`
-      : 'http://localhost:3000/oauth2callback';
+    const redirectUri = process.env.RENDER_EXTERNAL_URL
+      ? `${process.env.RENDER_EXTERNAL_URL}/oauth2callback`
+      : (process.env.RAILWAY_PUBLIC_DOMAIN
+        ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}/oauth2callback`
+        : 'http://localhost:3000/oauth2callback');
     const oAuth2Client = new google.auth.OAuth2(client_id, client_secret, redirectUri);
 
     const { tokens } = await oAuth2Client.getToken(code);
@@ -143,9 +147,11 @@ async function authorize() {
   }
 
   const { client_secret, client_id, redirect_uris } = credentials.installed || credentials.web;
-  const redirectUri = process.env.RAILWAY_PUBLIC_DOMAIN
-    ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}/oauth2callback`
-    : 'http://localhost:3000/oauth2callback';
+  const redirectUri = process.env.RENDER_EXTERNAL_URL
+    ? `${process.env.RENDER_EXTERNAL_URL}/oauth2callback`
+    : (process.env.RAILWAY_PUBLIC_DOMAIN
+      ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}/oauth2callback`
+      : 'http://localhost:3000/oauth2callback');
   const oAuth2Client = new google.auth.OAuth2(client_id, client_secret, redirectUri);
 
   // Verificar si ya tenemos token
@@ -165,8 +171,8 @@ async function authorize() {
   console.log('🔐 Abre esta URL para autorizar:', authUrl);
   io.emit('needsAuth', { authUrl });
 
-  // No usar open() en servidores headless como Railway
-  if (process.env.NODE_ENV !== 'production' && !process.env.RAILWAY_PUBLIC_DOMAIN) {
+  // No usar open() en servidores headless como Railway/Render
+  if (process.env.NODE_ENV !== 'production' && !process.env.RAILWAY_PUBLIC_DOMAIN && !process.env.RENDER_EXTERNAL_URL) {
     await open(authUrl);
   }
 
