@@ -32,7 +32,38 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// Ruta para iniciar autenticación
+// Ruta para iniciar sesión (redirección directa)
+app.get('/login', async (req, res) => {
+  try {
+    let credentials;
+    if (fs.existsSync(CREDENTIALS_PATH)) {
+      credentials = JSON.parse(fs.readFileSync(CREDENTIALS_PATH));
+    } else if (process.env.GOOGLE_CREDENTIALS) {
+      credentials = JSON.parse(process.env.GOOGLE_CREDENTIALS);
+    } else {
+      return res.status(500).send('No se encontraron credenciales.');
+    }
+
+    const { client_secret, client_id } = credentials.installed || credentials.web;
+    const redirectUri = process.env.RAILWAY_PUBLIC_DOMAIN
+      ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}/oauth2callback`
+      : 'http://localhost:3000/oauth2callback';
+
+    const oAuth2Client = new google.auth.OAuth2(client_id, client_secret, redirectUri);
+
+    const authUrl = oAuth2Client.generateAuthUrl({
+      access_type: 'offline',
+      scope: SCOPES,
+      prompt: 'consent' // Forzar a pedir permiso para asegurar que recibimos el refresh token
+    });
+
+    res.redirect(authUrl);
+  } catch (error) {
+    res.status(500).send('Error iniciando login: ' + error.message);
+  }
+});
+
+// Ruta para iniciar autenticación via socket (legacy)
 app.get('/auth', async (req, res) => {
   try {
     const auth = await authorize();

@@ -66,9 +66,11 @@ document.querySelectorAll('.modal-tab').forEach(tab => {
 
 // Auth button
 authBtn.addEventListener('click', () => {
-    socket.emit('startAuth');
+    // Redirigir directamente a la ruta de login
+    window.location.href = '/login';
+
     authBtn.disabled = true;
-    authBtn.innerHTML = '<div class="spinner" style="width:20px;height:20px;border-width:2px;margin:0;"></div> Conectando...';
+    authBtn.innerHTML = '<div class="spinner" style="width:20px;height:20px;border-width:2px;margin:0;"></div> Redirigiendo...';
 });
 
 // Refresh button
@@ -113,10 +115,10 @@ socket.on('needsAuth', (data) => {
     liveView.style.display = 'none';
     extractedView.style.display = 'none';
 
-    if (data.authUrl) {
-        showToast('info', 'Autenticación', 'Abriendo ventana de Google...');
-        // Abrir la URL de autenticación en una nueva ventana
-        window.open(data.authUrl, '_blank', 'width=500,height=600');
+    // No abrimos ventana automáticamente para evitar bloqueos del navegador
+    // El usuario ya hizo click en el botón que lo redirige a /login
+    if (data.authUrl && !authBtn.disabled) {
+        showToast('info', 'Autenticación', 'Haz click en el botón para conectar con Google');
     }
 });
 
