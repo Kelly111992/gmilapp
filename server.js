@@ -133,7 +133,11 @@ async function authorize() {
 
   console.log('🔐 Abre esta URL para autorizar:', authUrl);
   io.emit('needsAuth', { authUrl });
-  await open(authUrl);
+
+  // No usar open() en servidores headless como Railway
+  if (process.env.NODE_ENV !== 'production' && !process.env.RAILWAY_PUBLIC_DOMAIN) {
+    await open(authUrl);
+  }
 
   return null;
 }
