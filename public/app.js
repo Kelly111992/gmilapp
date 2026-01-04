@@ -114,7 +114,9 @@ socket.on('needsAuth', (data) => {
     extractedView.style.display = 'none';
 
     if (data.authUrl) {
-        showToast('info', 'Autenticación', 'Se abrirá una ventana para autorizar el acceso');
+        showToast('info', 'Autenticación', 'Abriendo ventana de Google...');
+        // Abrir la URL de autenticación en una nueva ventana
+        window.open(data.authUrl, '_blank', 'width=500,height=600');
     }
 });
 
