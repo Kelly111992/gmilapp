@@ -52,9 +52,17 @@ app.get('/oauth2callback', async (req, res) => {
   }
 
   try {
-    const credentials = JSON.parse(fs.readFileSync(CREDENTIALS_PATH));
+    let credentials;
+    if (fs.existsSync(CREDENTIALS_PATH)) {
+      credentials = JSON.parse(fs.readFileSync(CREDENTIALS_PATH));
+    } else if (process.env.GOOGLE_CREDENTIALS) {
+      credentials = JSON.parse(process.env.GOOGLE_CREDENTIALS);
+    }
     const { client_secret, client_id, redirect_uris } = credentials.installed || credentials.web;
-    const oAuth2Client = new google.auth.OAuth2(client_id, client_secret, 'http://localhost:3000/oauth2callback');
+    const redirectUri = process.env.RAILWAY_PUBLIC_DOMAIN
+      ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}/oauth2callback`
+      : 'http://localhost:3000/oauth2callback';
+    const oAuth2Client = new google.auth.OAuth2(client_id, client_secret, redirectUri);
 
     const { tokens } = await oAuth2Client.getToken(code);
     oAuth2Client.setCredentials(tokens);
@@ -92,13 +100,22 @@ app.get('/oauth2callback', async (req, res) => {
 
 // Autorizar con Google
 async function authorize() {
-  if (!fs.existsSync(CREDENTIALS_PATH)) {
+  let credentials;
+
+  // Intentar leer desde archivo o variable de entorno
+  if (fs.existsSync(CREDENTIALS_PATH)) {
+    credentials = JSON.parse(fs.readFileSync(CREDENTIALS_PATH));
+  } else if (process.env.GOOGLE_CREDENTIALS) {
+    credentials = JSON.parse(process.env.GOOGLE_CREDENTIALS);
+  } else {
     throw new Error('No se encontró credentials.json. Descárgalo de Google Cloud Console.');
   }
 
-  const credentials = JSON.parse(fs.readFileSync(CREDENTIALS_PATH));
   const { client_secret, client_id, redirect_uris } = credentials.installed || credentials.web;
-  const oAuth2Client = new google.auth.OAuth2(client_id, client_secret, 'http://localhost:3000/oauth2callback');
+  const redirectUri = process.env.RAILWAY_PUBLIC_DOMAIN
+    ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}/oauth2callback`
+    : 'http://localhost:3000/oauth2callback';
+  const oAuth2Client = new google.auth.OAuth2(client_id, client_secret, redirectUri);
 
   // Verificar si ya tenemos token
   if (fs.existsSync(TOKEN_PATH)) {
