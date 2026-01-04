@@ -295,7 +295,7 @@ io.on('connection', async (socket) => {
     } catch (error) {
       socket.emit('needsAuth', { message: 'Necesitas autenticarte' });
     }
-  } else if (!fs.existsSync(CREDENTIALS_PATH)) {
+  } else if (!fs.existsSync(CREDENTIALS_PATH) && !process.env.GOOGLE_CREDENTIALS) {
     socket.emit('needsCredentials', {
       message: 'Necesitas el archivo credentials.json de Google Cloud Console'
     });
